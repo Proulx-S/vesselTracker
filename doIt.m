@@ -35,13 +35,13 @@ forceThis = 0;   % manual-work reuse ladder (drawVesselCenter.m's opts.force): 0
 % One preprocessed (motion-corrected, dummy-scans dropped) single-slice 4D NIfTI per run. Several runs
 % are simply several entries of fList; everything below is per-run aware (mode='perRun'/'perRunPoly'
 % give one value / one polynomial per entry of fList). The example ships ONE run.
-fList = {fullfile(workDir, 'data', 'example_preproc_volTs.nii.gz')};
+fList = {fullfile(workDir, 'exampleData', 'mc_run1_mag.nii.gz')};
 tsIm  = loadNiftiTs(fList);
 fprintf('image %dx%d, %d run(s), %d frame(s), voxel %.2fx%.2f mm, TR %.3f s\n', ...
     size(tsIm.im{1},1), size(tsIm.im{1},2), numel(tsIm.im), size(tsIm.im{1},4), tsIm.vSize(1), tsIm.vSize(2), tsIm.dt(1));
 %% %%%%%%%%%%
 
-
+ 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Select vessel centers (manual)
@@ -52,8 +52,8 @@ opts = drawVesselCenter;
 opts.id       = 'example';
 opts.cacheDir = fullfile(workDir, 'drawVesselCenterCache');
 opts.force    = forceThis;
-opts.zoomXlim = [100 300];   % initial view only -- zoom/pan freely from the figure toolbar
-opts.zoomYlim = [100 300];
+opts.zoomXlim = [];   % initial view only -- zoom/pan freely from the figure toolbar
+opts.zoomYlim = [];
 center = drawVesselCenter(tsIm, opts);
 disp(center)
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,6 +71,9 @@ opts.sId    = 'example';
 vessel = makeVessel(tsIm, center, opts);
 clear tsIm                   % the full image is no longer needed
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+imagesc(mean(vessel{1}.tsIm.im{:},4))
 
 
 
