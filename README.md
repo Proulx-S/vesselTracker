@@ -44,8 +44,8 @@ cache), or `2` to start blank. Outputs land in `figures/` and `qaMovies/` (both 
 - `doIt.m` -- the example script (entry point).
 - `vesselPatch/` -- the three functions written for this tool: `loadNiftiTs.m`, `drawVesselCenter.m`,
   `makeVessel.m`. Each supports a no-argument call that prints its options and returns the defaults.
-- `vesselFit/` -- `fitVesselPatchTimeSeries.m`, its dependencies, and two visualizers
-  (`showVessel.m`, `fitVesselTimeSeriesDiag.m`), copied **unmodified** from `huMoMain2/vesselFit/`
+- `vesselFit/` -- `fitVesselPatchTimeSeries.m`, its dependencies, and three visualizers
+  (`showVessel.m`, `plotGaussianFitPanels.m`, `fitVesselTimeSeriesDiag.m`), copied **unmodified** from `huMoMain2/vesselFit/`
   (commit `a443faa`, 2026-09-24), plus `loadNiftiVol.m` from `huMoMain2/humanVessel/`. Only the files
   the four fit granularities and the two visualizers actually execute were brought over; see below.
 - `data/` -- the example timeseries.

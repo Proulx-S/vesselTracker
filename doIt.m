@@ -35,14 +35,13 @@ forceThis = 0;   % manual-work reuse ladder (drawVesselCenter.m's opts.force): 0
 % One preprocessed (motion-corrected, dummy-scans dropped) single-slice 4D NIfTI per run. Several runs
 % are simply several entries of fList; everything below is per-run aware (mode='perRun'/'perRunPoly'
 % give one value / one polynomial per entry of fList). The example ships ONE run.
-fList = {fullfile(workDir, 'data', 'example_preproc_volTs.nii.gz')};
+fList = {fullfile(workDir, 'exampleData', 'mc_run1_mag.nii.gz')};
 tsIm  = loadNiftiTs(fList);
 fprintf('image %dx%d, %d run(s), %d frame(s), voxel %.2fx%.2f mm, TR %.3f s\n', ...
     size(tsIm.im{1},1), size(tsIm.im{1},2), numel(tsIm.im), size(tsIm.im{1},4), tsIm.vSize(1), tsIm.vSize(2), tsIm.dt(1));
 %% %%%%%%%%%%
 
-
-
+return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Select vessel centers (manual)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -92,6 +91,26 @@ opts.model.gaussian.seedBounds.aspectRatio = inf;
 opts.model.background.seedBounds.b         = inf;
 vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
 vessel{1}.tsIm.gaussAnat.fits   % the fitPatchVessels.m-shaped view of a time-averaged fit
+
+%%% Visualize the anatomy fit
+% (a) Every vessel in one grid: time-averaged patch + the fitted main-peak contour (showVessel.m).
+opts = showVessel;
+showVessel(vessel, {'tsIm.gaussAnat.fits'}, opts);
+exportgraphics(gcf, fullfile(figDir, 'gaussAnat_contour.png'), 'Resolution', 150);
+% (b) One six-panel diagnostic per vessel (plotGaussianFitPanels.m): measured patch, fitted model at
+% isochromat resolution, residual, two-sided radial profiles of the data and of the model, and a
+% measured-vs-predicted scatter. buildGaussianFitDiag.m rebuilds the model image from the stored fit
+% (run 1, frame 1 -- a time-averaged fit has exactly one frame per run).
+opts = plotGaussianFitPanels;
+opts.xlimScale = 6;           % radial-profile x-range, in fitted equivalent-area radii
+% Numeric residual colormap (blue-white-red): the function's own default calls util's
+% colormap_divergingHue, which this standalone tool does not carry.
+opts.residualColormap = interp1([0 0.5 1], [0.1 0.4 1; 1 1 1; 1 0.3 0.1], linspace(0, 1, 256).');
+for v = 1:numel(vessel)
+    [diagS, titleStr] = buildGaussianFitDiag(vessel{v}, 'tsIm', 'gaussAnat', 1, 1);
+    plotGaussianFitPanels(diagS, titleStr, opts);
+    exportgraphics(gcf, fullfile(figDir, sprintf('%s_%s_gaussAnat_panels.png', vessel{v}.sId, vessel{v}.label)), 'Resolution', 150);
+end
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -144,11 +163,6 @@ vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
 %%%%%%%%%%%%%%%%%%%%
 %% Visualize the fit
 %%%%%%%%%%%%%%%%%%%%
-%%% Time-averaged patches with the fitted main-peak contour (showVessel.m, one panel per vessel)
-opts = showVessel;
-showVessel(vessel, {'tsIm.gaussAnat.fits'}, opts);
-exportgraphics(gcf, fullfile(figDir, 'gaussAnat_contour.png'), 'Resolution', 150);
-
 %%% Fitted position over time, all granularities on one axis per vessel (mm, patch-centered)
 for v = 1:numel(vessel)
     fig = figure('Name', sprintf('%s %s -- fitted position', vessel{v}.sId, vessel{v}.label), 'NumberTitle', 'off');
