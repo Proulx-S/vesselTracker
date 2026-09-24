@@ -1,0 +1,5 @@
+scratch/*
+!scratch/.gitkeep
+tmp/
+.claude/worktrees/
+.DS_Store
