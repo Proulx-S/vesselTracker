@@ -37,6 +37,7 @@ forceThis = 0;   % manual-work reuse ladder (drawVesselCenter.m's opts.force): 0
 % give one value / one polynomial per entry of fList). The example ships ONE run.
 fList = {fullfile(workDir, 'exampleData', 'mc_run1_mag.nii.gz')};
 tsIm  = loadNiftiTs(fList);
+MRIread(fList)
 fprintf('image %dx%d, %d run(s), %d frame(s), voxel %.2fx%.2f mm, TR %.3f s\n', ...
     size(tsIm.im{1},1), size(tsIm.im{1},2), numel(tsIm.im), size(tsIm.im{1},4), tsIm.vSize(1), tsIm.vSize(2), tsIm.dt(1));
 %% %%%%%%%%%%
@@ -129,37 +130,68 @@ end
 %   'perRun'             one value per run
 %   'perFrame'           one value per frame
 %   'perRunPoly([0 1 2])' a Legendre polynomial in within-run time, its own coefficients per run
-gaussParam = {'a','x0','y0','radius','aspectRatio','theta'};
 
-%%% perVessel -- the anatomy refit jointly on every raw frame (no time averaging)
-opts = fitVesselPatchTimeSeries(vessel, 'tsIm.gaussAnat');
-opts.outFld  = 'gaussPerVessel';
-opts.timeAvg = false;
-vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
 
-%%% perRun -- every parameter free per run (with one run this equals perVessel; add runs to fList)
-opts = fitVesselPatchTimeSeries(vessel, 'tsIm.gaussAnat');
-opts.outFld  = 'gaussPerRun';
-opts.timeAvg = false;
-for p = gaussParam; opts.model.gaussian.mode.(p{1}) = 'perRun'; end
-opts.model.background.mode.b = 'perRun';
-vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
+% %%% perVessel -- the anatomy refit jointly on every raw frame (no time averaging)
+% opts = fitVesselPatchTimeSeries(vessel, 'tsIm.gaussAnat');
+% opts.outFld  = 'gaussPerVessel';
+% opts.timeAvg = false;
+% vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
 
+% %%% perRun -- every parameter free per run (with one run this equals perVessel; add runs to fList)
+% opts = fitVesselPatchTimeSeries(vessel, 'tsIm.gaussAnat');
+% opts.outFld  = 'gaussPerRun';
+% opts.timeAvg = false;
+% for p = gaussParam; opts.model.gaussian.mode.(p{1}) = 'perRun'; end
+% opts.model.background.mode.b = 'perRun';
+% vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
+
+vessel{1}.tsIm
 %%% perFrame -- vessel POSITION tracked frame by frame, shape and background shared across frames
 opts = fitVesselPatchTimeSeries(vessel, 'tsIm.gaussAnat');
 opts.outFld  = 'gaussPerFrame';
-opts.timeAvg = false;
-opts.model.gaussian.mode.x0 = 'perFrame';
-opts.model.gaussian.mode.y0 = 'perFrame';
+opts.model.gaussian.mode.x0     = 'perFrame';
+opts.model.gaussian.mode.y0     = 'perFrame';
+opts.model.gaussian.mode.a      = 'perFrame';
+opts.model.gaussian.mode.radius = 'perFrame';
 vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
+
+figure
+params = {'x0','y0','a','radius'};
+for p = 1:numel(params)
+    subplot(2,2,p); hold on
+    plot(0:2:(size(vessel{1}.tsIm.gaussPerFrame.(params{p}),2)*2-1),vessel{1}.tsIm.gaussPerFrame.(params{p}));
+    yline(vessel{1}.tsIm.gaussAnat.(params{p}));
+    ylabel(params{p})
+    grid on
+end
+
+
+
+
 
 %%% perRunPoly -- position as a smooth quadratic drift within each run
 opts = fitVesselPatchTimeSeries(vessel, 'tsIm.gaussAnat');
 opts.outFld  = 'gaussPerRunPoly';
 opts.timeAvg = false;
-opts.model.gaussian.mode.x0 = 'perRunPoly([0 1 2])';
-opts.model.gaussian.mode.y0 = 'perRunPoly([0 1 2])';
+opts.model.gaussian.mode.x0     = 'perRunPoly([0 1 2])';
+opts.model.gaussian.mode.y0     = 'perRunPoly([0 1 2])';
+opts.model.gaussian.mode.a      = 'perFrame';
+opts.model.gaussian.mode.radius = 'perFrame';
 vessel = fitVesselPatchTimeSeries(vessel, 'tsIm', opts);
+
+figure
+params = {'x0','y0','a','radius'};
+for p = 1:numel(params)
+    subplot(2,2,p); hold on
+    plot(0:2:(size(vessel{1}.tsIm.gaussPerRunPoly.(params{p}),2)*2-1),vessel{1}.tsIm.gaussPerRunPoly.(params{p}));
+    yline(vessel{1}.tsIm.gaussAnat.(params{p}));
+    ylabel(params{p})
+    grid on
+end
+
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
